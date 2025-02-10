@@ -46,4 +46,5 @@ cp petpix_v3/bin/convert_one_video /var/www/html/bin
 cp petpix_v3/bin/petscii_convert /var/www/html/bin
 rm /var/www/html/index.html
 chmod 777 /var/www/html/uploads
+chmod 777 /var/www/html/control
 reboot

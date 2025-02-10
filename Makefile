@@ -1,4 +1,5 @@
 all: bin/petpix bin/petscii_timed_sender bin/petpixPlayer bin/convert_one_video bin/petscii_convert
+pet: bin/client.prg bin/petpix40.prg bin/petpix80.prg bin/cfast.prg
 
 clean:
 	rm bin/*

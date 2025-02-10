@@ -83,6 +83,7 @@ int main(int argc, char** argv)
     int c;
     Tools::Timer* timer = Tools::Timer::createTimer();
     Tools::Timer* runTimer = Tools::Timer::createTimer();
+    Tools::Timer* delayTimer = Tools::Timer::createTimer();
     uint8_t* data = NULL;
     char destAddr[256];
     char tempFile[256];
@@ -104,7 +105,9 @@ int main(int argc, char** argv)
     float lastDisplayTime = -1;
     int framesPerSecond = 0;
     int lastSecond = 0;
-
+    int maxRate = 6;
+    double delayTime = 0;
+    
     playlistEntries = (char**)malloc(sizeof(char*) * 256);
     for (int i = 0; i < 256; i++)
     {
@@ -118,7 +121,7 @@ int main(int argc, char** argv)
     sprintf(playlistFileName, "/var/www/html/control/playlist.txt");
     sprintf(videoDirectory, "/var/www/html/uploads/");
 
-    while ((c = getopt(argc, argv, "a:f:p:c:l:n:v:")) != -1)
+    while ((c = getopt(argc, argv, "a:f:p:c:l:n:v:r:")) != -1)
     {
         if (c == 'a')
         {
@@ -152,6 +155,10 @@ int main(int argc, char** argv)
         {
             strcpy(videoDirectory, optarg);
         }
+        else if (c == 'r')
+        {
+            maxRate = atoi(optarg);
+        }
     }
 
     int bytesInFrame = rows * columns;
@@ -161,6 +168,11 @@ int main(int argc, char** argv)
     sprintf(ncCmdString, "cat %s | nc -N %s %d", tempFile, destAddr, port);
     runTimer->start();
 
+    if (maxRate > 0)
+    {
+        delayTime = 1.0 / (double)maxRate;
+    }
+    
     // main loop
     while (1)
     {
@@ -253,6 +265,21 @@ int main(int argc, char** argv)
             }
             else
             {
+                // check if we are running too fast and sleep if needed
+                if (delayTime > 0) 
+                {
+                    double elapsed = delayTimer->getTime();
+                    while (elapsed < delayTime)
+                    {
+                        usleep(100);
+                        elapsed = delayTimer->getTime();
+                    }
+                    delayTimer->start();
+                }
+
+                lastDisplayTime = (double)time;
+
+                // write to file
                 FILE* fp = fopen(tempFile, "wb");
                 fwrite(data, 1, bytesInFrame, fp);
                 fclose(fp);
